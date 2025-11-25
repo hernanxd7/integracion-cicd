@@ -1,0 +1,45 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build and push Docker image
+        # Esta acción construye la imagen y la guarda temporalmente
+        run: |
+          docker build -t my-app .
+          docker save my-app > my-app.tar
+
+      - name: Copy Docker image to VPS
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "my-app.tar"
+          target: "/home/hernan7"
+
+      - name: Execute deployment on VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            # Cargar la imagen nueva
+            docker load < /home/hernan7/my-app.tar
+            
+            # Detener el contenedor viejo (si existe)
+            docker stop mi-app-container || true
+            docker rm mi-app-container || true
+            
+            # Correr el nuevo contenedor en el puerto 3000
+            # Pasamos APP_COLOR=blue como ejemplo para tu tarea
+            docker run -d -p 3000:3000 --name mi-app-container -e APP_COLOR=blue my-app
