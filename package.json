@@ -1,0 +1,13 @@
+{
+  "name": "base-express-app",
+  "version": "1.0.0",
+  "description": "App base en Node.js con Express: servidor, puerto y ruta GET que responde JSON.",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
