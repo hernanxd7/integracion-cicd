@@ -1,45 +1,60 @@
-name: Deploy to VPS
+name: Deploy Blue-Green
 
 on:
   push:
     branches: [ "main" ]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build and push Docker image
-        # Esta acción construye la imagen y la guarda temporalmente
-        run: |
-          docker build -t my-app .
-          docker save my-app > my-app.tar
-
-      - name: Copy Docker image to VPS
-        uses: appleboy/scp-action@master
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "my-app.tar"
-          target: "/home/hernan7"
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Execute deployment on VPS
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=long
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            # Cargar la imagen nueva
-            docker load < /home/hernan7/my-app.tar
+            # Exportar variable necesaria
+            export GITHUB_REPOSITORY="${{ github.repository }}"
             
-            # Detener el contenedor viejo (si existe)
-            docker stop mi-app-container || true
-            docker rm mi-app-container || true
-            
-            # Correr el nuevo contenedor en el puerto 3000
-            # Pasamos APP_COLOR=blue como ejemplo para tu tarea
-            docker run -d -p 3000:3000 --name mi-app-container -e APP_COLOR=blue my-app
+            # Ejecutar el script shell pasando el SHA (tag) como argumento
+            /home/hernan7/app/deploy_blue_green.sh sha-${{ github.sha }}
