@@ -8,7 +8,7 @@ app.get('/', (req, res) => {
   res.json({
     status: 'ok',
     color: APP_COLOR,
-    message: `Sirviendo desde el slot: ${APP_COLOR}`,
+    message: `Versión 2 - Despliegue Green Exitoso`,
   })
 })
 
