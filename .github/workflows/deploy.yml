@@ -19,6 +19,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # --- AQUÍ VA LO NUEVO (INICIO) ---
+      # Instalamos dependencias y corremos los tests antes de crear el Docker
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm test
+      # --- AQUÍ VA LO NUEVO (FIN) ---
+
       - name: Log in to the Container registry
         uses: docker/login-action@v2
         with:
