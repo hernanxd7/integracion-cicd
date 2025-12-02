@@ -16,7 +16,7 @@ let habitaciones = [
 // Endpoint 1: Ver estado del servidor (Requisito Blue/Green)
 app.get('/', (req, res) => {
     res.json({
-        mensaje: "Bienvenido a la API del Hotel",
+        mensaje: "Bienvenido a la API de Hospedaje",
         servidor: APP_COLOR, // Esto demuestra el cambio Blue/Green
         version: "2.0.0"
     });
