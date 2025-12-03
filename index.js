@@ -17,6 +17,7 @@ let habitaciones = [
 app.get('/', (req, res) => {
     res.json({
         mensaje: "Bienvenido a la API de Hospedajeeeeeeeeeeee",
+        servidor: APP_COLOR, // Esto demuestra el cambio Blue/Green
         version: "2.0.0"
     });
 });
